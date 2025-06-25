@@ -7,7 +7,7 @@ const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [logs, setLogs] = useState('请搜索站点');
+  const [logs, setLogs] = useState('INIT'); // 初始值设为特殊标识
   const [lines, setLines] = useState([]);
   const [recentStops, setRecentStops] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -239,7 +239,9 @@ export default function Home() {
 
       {logs && (
         <div className="mb-6 text-center text-blue-600 whitespace-pre-line">
-          {logs}
+          {logs === 'INIT'
+            ? lang === 'zh' ? '请搜索站点' : 'Please search a stop'
+            : logs}
         </div>
       )}
 
