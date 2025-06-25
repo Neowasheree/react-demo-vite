@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 
 export default function DepartureLog({ lines }) {
+  console.log('📦 grouped lines:', lines);
   if (!Array.isArray(lines) || lines.length === 0) return null;
 
   const grouped = lines.reduce((acc, item) => {
