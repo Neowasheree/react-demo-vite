@@ -128,6 +128,9 @@ export default function Home() {
       };
     });
 
+    console.log('🎯 data', data);
+    console.log('✅ formattedLines', formattedLines);
+    
     setLines(formattedLines);
     setLogs('');
     saveStop(stopName);
