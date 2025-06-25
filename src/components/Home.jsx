@@ -5,7 +5,7 @@ const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [lines, setLines] = useState([]); // ✅ 查询结果改为对象数组
+  const [lines, setLines] = useState([]);
   const [logs, setLogs] = useState('请搜索站点');
   const [recentStops, setRecentStops] = useState([]);
 
@@ -102,7 +102,6 @@ export default function Home() {
 
     setLines(formattedLines);
     setLogs('');
-
     saveStop(stopName);
 
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -117,35 +116,31 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-700 tracking-wide mb-1">🚋 Tram Departures</h1>
-        <p className="text-gray-600 text-sm sm:text-base mb-4">
-          查看慕尼黑轻轨 & 公交的实时到站信息
-        </p>
+    <div className="max-w-md mx-auto px-4 py-8">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold text-blue-700">🚋 Tram Departures</h1>
+        <p className="text-sm text-gray-500 mt-1">实时查看慕尼黑轻轨 & 公交车次</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="输入站点名（如 Borstei）"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+          placeholder="输入站点（如 Borstei）"
+          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
         />
         <button
           onClick={() => queryDepartures()}
-          className="w-full sm:w-auto flex items-center gap-2 justify-center px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+          className="w-full sm:w-auto px-4 py-3 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow"
         >
-          🔍 查询并通知
+          🔍 查询
         </button>
       </div>
 
       {recentStops.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-md font-semibold text-gray-700 mb-2 flex items-center gap-2">
-            🕘 最近使用
-          </h2>
+          <h2 className="text-sm font-semibold text-gray-600 mb-2">🕘 最近使用</h2>
           <div className="flex flex-wrap gap-2">
             {recentStops.map((name) => (
               <button
@@ -154,7 +149,7 @@ export default function Home() {
                   setInput(name);
                   queryDepartures(name);
                 }}
-                className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-sm rounded-full shadow-sm transition"
+                className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-full text-sm shadow-sm"
               >
                 {name}
               </button>
@@ -168,20 +163,18 @@ export default function Home() {
         {lines.map((item, idx) => (
           <div
             key={idx}
-            className="bg-white border rounded-lg shadow-sm p-3 text-sm space-y-1"
+            className="p-4 bg-white border rounded-lg shadow-sm text-sm space-y-1"
           >
-            <div className="flex justify-between items-center font-semibold text-blue-700">
-              <div>{item.line} → {item.destination}</div>
-              <div>{item.time}（{item.mins}min）</div>
+            <div className="flex justify-between font-semibold text-blue-700">
+              <span>{item.line} → {item.destination}</span>
+              <span>{item.time}（{item.mins}min）</span>
             </div>
-           <div className={
+            <div className={
               item.status.includes('Delayed')
                 ? 'text-red-600'
                 : item.status.includes('On time')
                 ? 'text-green-600'
-                : item.status.includes('Cancelled')
-                ? 'text-gray-500'
-                : 'text-gray-700'
+                : 'text-gray-500'
             }>
               {item.status}
             </div>
