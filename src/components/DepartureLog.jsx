@@ -1,10 +1,8 @@
-// DepartureLog component: grouped by tram line (样式B)
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function DepartureLog({ lines }) {
   if (!Array.isArray(lines) || lines.length === 0) return null;
 
-  // 分组：按 line 名称（如 '20 Tram'）
   const grouped = lines.reduce((acc, item) => {
     const key = item.line;
     if (!acc[key]) acc[key] = [];
@@ -19,42 +17,57 @@ export default function DepartureLog({ lines }) {
     return 'bg-gray-400';
   };
 
+  const renderStatus = (status) => {
+    if (status.includes('Cancelled')) return '❌ 已取消';
+    if (status.includes('Delayed')) return `🚨 延误 ${status.split('+')[1]}`;
+    return '✅ 准点';
+  };
+
   return (
     <div className="space-y-4">
-      {Object.entries(grouped).map(([line, items], idx) => (
+      {Object.entries(grouped).map(([line, items]) => (
         <motion.div
           key={line}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
-          className="bg-white shadow rounded-lg overflow-hidden"
+          className="bg-white rounded-xl shadow-md p-4"
         >
-          <div className="flex items-center px-4 py-2 border-b">
-            <div className={`text-white text-sm font-bold px-2 py-1 rounded ${getColorClass(line)}`}>
+          {/* 线路头部 */}
+          <div className="flex items-center mb-3">
+            <div
+              className={`text-white px-2 py-1 rounded text-sm font-bold ${getColorClass(
+                line
+              )}`}
+            >
               {line}
             </div>
-            <div className="ml-3 font-semibold text-gray-800">
-              {line} Tram
+            <div className="ml-2 font-semibold text-gray-800 text-base">
+              路线 {line}
             </div>
           </div>
 
-          <div className="divide-y text-sm">
-            {items.map((item, i) => (
-              <div key={i} className="flex justify-between px-4 py-2">
+          {/* 班次内容 */}
+          <div className="divide-y divide-gray-100">
+            {items.map((item, idx) => (
+              <div key={idx} className="flex justify-between items-start py-3">
+                {/* 左侧内容 */}
                 <div>
-                  <div>{item.destination}</div>
-                  <div className="text-gray-500 text-xs">
-                    {item.status === '❌ Cancelled'
-                      ? '已取消'
-                      : item.status.includes('Delayed')
-                      ? item.status
-                      : 'On time'}
+                  <div className="text-base font-medium text-gray-900">
+                    {item.destination}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5 leading-snug">
+                    ⏱ 预计 {item.time}
+                    <br />
+                    {renderStatus(item.status)}
                   </div>
                 </div>
-                <div className="text-right whitespace-nowrap">
-                  <div className="font-medium">{item.mins} min</div>
-                  <div className="text-xs text-gray-400">{item.time}</div>
+
+                {/* 右侧时间 */}
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-gray-900">
+                    {item.mins} 分钟
+                  </div>
                 </div>
               </div>
             ))}
