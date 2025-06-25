@@ -27,7 +27,7 @@ export default function Home() {
 
   const queryDepartures = async () => {
     setLogs('查询中…');
-    const term = input.trim();
+    const term = (customTerm ?? input).trim();
     if (!term) {
       alert('请输入站点名称');
       return;
@@ -135,7 +135,7 @@ export default function Home() {
               key={name}
               onClick={() => {
                 setInput(name);
-                queryDepartures();
+                queryDepartures(name);
               }}
               className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-sm rounded-full shadow-sm transition"
             >
