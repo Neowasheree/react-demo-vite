@@ -1,4 +1,4 @@
-// Animated + Mobile-Optimized Home.jsx
+// Animated + Mobile-Optimized Home.jsx with Clear and Favorite Delete Features
 import { useState, useEffect } from 'react';
 import allowedStops from '../allowedStops';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,7 @@ export default function Home() {
   const [lines, setLines] = useState([]);
   const [logs, setLogs] = useState('请搜索站点');
   const [recentStops, setRecentStops] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -17,12 +18,36 @@ export default function Home() {
     }
     const saved = JSON.parse(localStorage.getItem('recentStops') || '[]');
     setRecentStops(saved);
+    const savedFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
+    setFavorites(savedFavs);
   }, []);
 
   const saveStop = (name) => {
     const updated = [name, ...recentStops.filter((s) => s !== name)].slice(0, 5);
     setRecentStops(updated);
     localStorage.setItem('recentStops', JSON.stringify(updated));
+  };
+
+  const toggleFavorite = (name) => {
+    let updated;
+    if (favorites.includes(name)) {
+      updated = favorites.filter((s) => s !== name);
+    } else {
+      updated = [name, ...favorites.filter((s) => s !== name)].slice(0, 10);
+    }
+    setFavorites(updated);
+    localStorage.setItem('favorites', JSON.stringify(updated));
+  };
+
+  const clearRecentStops = () => {
+    setRecentStops([]);
+    localStorage.removeItem('recentStops');
+  };
+
+  const removeFavorite = (name) => {
+    const updated = favorites.filter((s) => s !== name);
+    setFavorites(updated);
+    localStorage.setItem('favorites', JSON.stringify(updated));
   };
 
   const queryDepartures = async (customTerm) => {
@@ -144,24 +169,81 @@ export default function Home() {
         </button>
       </div>
 
-      {recentStops.length > 0 && (
+      {(recentStops.length > 0 || favorites.length > 0) && (
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-600 mb-2">🕘 最近使用</h2>
-          <div className="flex flex-wrap gap-2">
-            {recentStops.map((name) => (
-              <motion.button
-                key={name}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setInput(name);
-                  queryDepartures(name);
-                }}
-                className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-full text-sm shadow-sm"
-              >
-                {name}
-              </motion.button>
-            ))}
-          </div>
+          {favorites.length > 0 && (
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm font-semibold text-gray-600">⭐ 常用站点</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {favorites.map((name) => (
+                  <motion.div
+                    key={name}
+                    className="flex items-center gap-1"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => {
+                        setInput(name);
+                        queryDepartures(name);
+                      }}
+                      className="px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 rounded-full text-sm shadow-sm"
+                    >
+                      {name}
+                    </button>
+                    <button
+                      onClick={() => removeFavorite(name)}
+                      className="text-red-400 text-sm"
+                      title="移除收藏"
+                    >
+                      ✖
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recentStops.length > 0 && (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm font-semibold text-gray-600">🕘 最近使用</h2>
+                <button
+                  onClick={clearRecentStops}
+                  className="text-xs text-gray-400 hover:text-red-500"
+                >
+                  清空
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentStops.map((name) => (
+                  <motion.div
+                    key={name}
+                    className="flex items-center gap-1"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <button
+                      onClick={() => {
+                        setInput(name);
+                        queryDepartures(name);
+                      }}
+                      className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-full text-sm shadow-sm"
+                    >
+                      {name}
+                    </button>
+                    <button
+                      onClick={() => toggleFavorite(name)}
+                      className="text-yellow-400 text-sm"
+                      title="添加/取消收藏"
+                    >
+                      {favorites.includes(name) ? '★' : '☆'}
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
