@@ -23,14 +23,14 @@ export default function Home() {
   };
 
   const queryDepartures = async (customTerm) => {
-    setLogs('查询中…');
-
     const termRaw = customTerm ?? input;
     const term = typeof termRaw === 'string' ? termRaw.trim() : '';
     if (!term) {
       alert('请输入站点名称');
       return;
     }
+
+    setLogs('查询中…'); // ✅ 确保仅在 term 有效后设置
 
     const candidates = Object.keys(allowedStops).filter((name) =>
       name.toLowerCase().includes(term.toLowerCase())
@@ -120,8 +120,8 @@ export default function Home() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="text-center mb-8">
-        <h1 className="text-5xl font-extrabold text-blue-700 tracking-wide mb-2">🚋 Tram Departures</h1>
-        <p className="text-gray-600">查看慕尼黑轻轨 & 公交的实时到站信息</p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-700 tracking-wide mb-1"> 🚋 Tram Departures</h1>
+        <p className="text-gray-600 text-sm sm:text-base mb-4">查看慕尼黑轻轨 & 公交的实时到站信息</p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
@@ -130,11 +130,11 @@ export default function Home() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="输入站点名（如 Borstei）"
-          className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+          className="w-full flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
         />
         <button
           onClick={() => queryDepartures()}
-          className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+          className="w-full sm:w-auto flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
         >
           🔍 查询并通知
         </button>
@@ -169,9 +169,9 @@ export default function Home() {
           logs.split('\n').map((line, idx) => (
             <div
               key={idx}
-              className="p-4 bg-white border rounded-lg shadow flex items-center justify-between text-sm"
+              className="p-3 rounded-lg bg-white border shadow text-sm space-y-1 font-mono"
             >
-              <span className="text-gray-800 font-mono">{line}</span>
+              {line}
             </div>
           ))
         )}
