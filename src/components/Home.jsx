@@ -1,27 +1,27 @@
-// Full-featured Home.jsx with grouped DepartureLog and all previous features retained
 import { useState, useEffect } from 'react';
 import allowedStops from '../allowedStops';
-import { motion } from 'framer-motion';
 import DepartureLog from './DepartureLog';
+import { motion } from 'framer-motion';
 
 const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [lines, setLines] = useState([]);
   const [logs, setLogs] = useState('请搜索站点');
+  const [lines, setLines] = useState([]);
   const [recentStops, setRecentStops] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [lang, setLang] = useState('zh'); // 'zh' or 'en'
 
   useEffect(() => {
     if ('Notification' in window) {
       Notification.requestPermission();
     }
-    const saved = JSON.parse(localStorage.getItem('recentStops') || '[]');
-    setRecentStops(saved);
-    const savedFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setFavorites(savedFavs);
+    setRecentStops(JSON.parse(localStorage.getItem('recentStops') || '[]'));
+    setFavorites(JSON.parse(localStorage.getItem('favorites') || '[]'));
   }, []);
+
+  const t = (zh, en) => (lang === 'zh' ? zh : en);
 
   const saveStop = (name) => {
     const updated = [name, ...recentStops.filter((s) => s !== name)].slice(0, 5);
@@ -30,12 +30,9 @@ export default function Home() {
   };
 
   const toggleFavorite = (name) => {
-    let updated;
-    if (favorites.includes(name)) {
-      updated = favorites.filter((s) => s !== name);
-    } else {
-      updated = [name, ...favorites.filter((s) => s !== name)].slice(0, 10);
-    }
+    const updated = favorites.includes(name)
+      ? favorites.filter((s) => s !== name)
+      : [name, ...favorites.filter((s) => s !== name)].slice(0, 10);
     setFavorites(updated);
     localStorage.setItem('favorites', JSON.stringify(updated));
   };
@@ -55,11 +52,11 @@ export default function Home() {
     const termRaw = customTerm ?? input;
     const term = typeof termRaw === 'string' ? termRaw.trim() : '';
     if (!term) {
-      alert('请输入站点名称');
+      alert(t('请输入站点名称', 'Please enter a stop name'));
       return;
     }
 
-    setLogs('查询中…');
+    setLogs(t('查询中…', 'Loading…'));
     setLines([]);
 
     const candidates = Object.keys(allowedStops).filter((name) =>
@@ -67,17 +64,19 @@ export default function Home() {
     );
 
     if (candidates.length === 0) {
-      setLogs(`未在列表中找到“${term}”`);
+      setLogs(t(`未在列表中找到“${term}”`, `No match found for "${term}"`));
       return;
     }
 
     let stopName = candidates[0];
     if (candidates.length > 1) {
       const choice = prompt(
-        '匹配到多个站点，请从下面复制完整名称粘贴：\n' + candidates.join('\n')
+        t('匹配到多个站点，请从下面复制完整名称粘贴：', 'Multiple matches found. Please choose:') +
+          '\n' +
+          candidates.join('\n')
       );
       if (!choice || !allowedStops[choice]) {
-        setLogs('未选择有效站点');
+        setLogs(t('未选择有效站点', 'Invalid selection'));
         return;
       }
       stopName = choice;
@@ -96,13 +95,13 @@ export default function Home() {
       data = await res.json();
     } catch (e) {
       console.error(e);
-      setLogs('网络请求失败');
+      setLogs(t('网络请求失败', 'Network error'));
       return;
     }
 
     const now = Date.now();
     if (!Array.isArray(data) || data.length === 0) {
-      setLogs(`${stopName} 暂无未来班次`);
+      setLogs(`${stopName} ${t('暂无未来班次', 'No future departures')}`);
       return;
     }
 
@@ -114,10 +113,10 @@ export default function Home() {
         minute: '2-digit',
       });
       const status = d.cancelled
-        ? '❌ Cancelled'
+        ? t('❌ 已取消', '❌ Cancelled')
         : d.delayInMinutes > 0
-        ? `⏱️ Delayed +${d.delayInMinutes}min`
-        : '✅ On time';
+        ? t(`🚨 延误 +${d.delayInMinutes}min`, `🚨 Delayed +${d.delayInMinutes}min`)
+        : t('✅ 准点', '✅ On time');
 
       return {
         line: `${d.transportType}${d.label}`,
@@ -128,119 +127,109 @@ export default function Home() {
       };
     });
 
-    console.log('🎯 data', data);
-    console.log('✅ formattedLines', formattedLines);
-    
     setLines(formattedLines);
     setLogs('');
-    saveStop(stopName);
     setInput('');
+    saveStop(stopName);
 
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(`${stopName} Departures`, {
-        body: formattedLines
-          .map((l) => `${l.line} → ${l.destination}: ${l.time} (${l.status})`)
-          .join('\n'),
+      new Notification(`${stopName} ${t('班次', 'Departures')}`, {
+        body: formattedLines.map((l) => `${l.line} → ${l.destination}: ${l.time} (${l.status})`).join('\n'),
       });
     }
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
-      <motion.div
-        className="text-center mb-6"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-blue-700">🚋 Tram Departures</h1>
-        <p className="text-sm text-gray-500 mt-1">实时查看慕尼黑轻轨 & 公交车次</p>
-      </motion.div>
+        <button
+          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+          className="text-sm text-gray-500 hover:text-blue-600"
+        >
+          {lang === 'zh' ? '🌐 English' : '🌐 中文'}
+        </button>
+      </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
+        {t('实时查看慕尼黑轻轨 & 公交车次', 'Live departures for Munich Tram & Bus')}
+      </p>
+
+      <div className="flex gap-3 mb-6">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="输入站点（如 Borstei）"
-          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+          placeholder={t('输入站点（如 Borstei）', 'Enter stop (e.g., Borstei)')}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <button
           onClick={() => queryDepartures()}
-          className="w-full sm:w-auto px-4 py-3 text-base bg-blue-600 text-white rounded-lg hover:scale-105 transition-transform font-semibold shadow"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg shadow"
         >
-          🔍 查询
+          🔍 {t('查询', 'Search')}
         </button>
       </div>
 
-      {(recentStops.length > 0 || favorites.length > 0) && (
+      {(favorites.length > 0 || recentStops.length > 0) && (
         <div className="mb-6">
           {favorites.length > 0 && (
-            <div className="mb-4">
-              <h2 className="text-sm font-semibold text-gray-600 mb-2">⭐ 常用站点</h2>
+            <div className="mb-3">
+              <h2 className="font-semibold mb-2">⭐ {t('常用站点', 'Favorites')}</h2>
               <div className="flex flex-wrap gap-2">
                 {favorites.map((name) => (
-                  <motion.div
-                    key={name}
-                    className="flex items-center gap-1"
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <div key={name} className="flex gap-1 items-center">
                     <button
+                      className="px-3 py-1 bg-yellow-100 rounded-full shadow-sm"
                       onClick={() => {
                         setInput(name);
                         queryDepartures(name);
                       }}
-                      className="px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 rounded-full text-sm shadow-sm"
                     >
                       {name}
                     </button>
                     <button
                       onClick={() => removeFavorite(name)}
                       className="text-red-400 text-sm"
-                      title="移除收藏"
+                      title={t('移除收藏', 'Remove')}
                     >
                       ✖
                     </button>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
-
           {recentStops.length > 0 && (
             <div>
               <div className="flex justify-between items-center mb-2">
-                <h2 className="text-sm font-semibold text-gray-600">🕘 最近使用</h2>
+                <h2 className="font-semibold">🕘 {t('最近使用', 'Recent')}</h2>
                 <button
                   onClick={clearRecentStops}
                   className="text-xs text-gray-400 hover:text-red-500"
                 >
-                  清空
+                  {t('清空', 'Clear')}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {recentStops.map((name) => (
-                  <motion.div
-                    key={name}
-                    className="flex items-center gap-1"
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <div key={name} className="flex gap-1 items-center">
                     <button
+                      className="px-3 py-1 bg-gray-200 rounded-full shadow-sm"
                       onClick={() => {
                         setInput(name);
                         queryDepartures(name);
                       }}
-                      className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-full text-sm shadow-sm"
                     >
                       {name}
                     </button>
                     <button
                       onClick={() => toggleFavorite(name)}
-                      className="text-yellow-400 text-sm"
-                      title="添加/取消收藏"
+                      className="text-yellow-500"
                     >
                       {favorites.includes(name) ? '★' : '☆'}
                     </button>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -248,11 +237,13 @@ export default function Home() {
         </div>
       )}
 
-      {logs === '查询中…' && (
-        <p className="text-blue-500 animate-pulse mb-4">查询中...</p>
+      {logs && (
+        <div className="mb-6 text-center text-blue-600 whitespace-pre-line">
+          {logs}
+        </div>
       )}
 
-      <DepartureLog logs={lines} />
+      <DepartureLog lines={lines} lang={lang} />
     </div>
   );
 }
