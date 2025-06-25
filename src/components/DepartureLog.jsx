@@ -36,13 +36,6 @@ export default function DepartureLog({ lines }) {
         >
           {/* 线路头部 */}
           <div className="flex items-center mb-3">
-            <div
-              className={`text-white px-2 py-1 rounded text-sm font-bold ${getColorClass(
-                line
-              )}`}
-            >
-              {line}
-            </div>
             <div className="ml-2 font-semibold text-gray-800 text-base">
               路线 {line}
             </div>
