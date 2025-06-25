@@ -1,7 +1,4 @@
 import { useState, useEffect } from 'react';
-import Header from './Header';
-import StopInput from './StopInput';
-import DepartureLog from './DepartureLog';
 import allowedStops from '../allowedStops';
 
 const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
@@ -89,18 +86,31 @@ export default function Home() {
       const status = d.cancelled
         ? '❌ Cancelled'
         : d.delayInMinutes > 0
-        ? `Delayed +${d.delayInMinutes}min`
-        : 'On time';
+        ? `⏱️ Delayed +${d.delayInMinutes}min`
+        : '✅ On time';
 
-      return `${d.transportType}${d.label} → ${d.destination}: ${timeStr} (in ${mins}min) ${status}`;
+      return {
+        line: `${d.transportType}${d.label}`,
+        destination: d.destination,
+        time: timeStr,
+        mins,
+        status,
+      };
     });
 
-    setLogs(lines.join('\n'));
+    const formatted = lines
+      .map(
+        (item) =>
+          `${item.line} → ${item.destination}: ${item.time} (in ${item.mins}min) ${item.status}`
+      )
+      .join('\n');
+
+    setLogs(formatted);
     saveStop(stopName);
 
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(`${stopName} Departures`, {
-        body: lines.join('\n'),
+        body: formatted,
       });
     }
 
@@ -108,22 +118,23 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 bg-white rounded-lg shadow-xl">
-      <h1 className="text-4xl font-bold text-center text-blue-700 mb-6 tracking-wide">
-        🚋 Tram Departures
-      </h1>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="text-center mb-8">
+        <h1 className="text-5xl font-extrabold text-blue-700 tracking-wide mb-2">🚋 Tram Departures</h1>
+        <p className="text-gray-600">查看慕尼黑轻轨 & 公交的实时到站信息</p>
+      </div>
 
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="请输入站点名（如 Borstei）"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
+          placeholder="输入站点名（如 Borstei）"
+          className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
         />
         <button
           onClick={() => queryDepartures()}
-          className="w-full mt-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
+          className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
         >
           🔍 查询并通知
         </button>
@@ -131,7 +142,9 @@ export default function Home() {
 
       {recentStops.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-md font-semibold text-gray-700 mb-2">🕘 最近使用</h2>
+          <h2 className="text-md font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            🕘 最近使用
+          </h2>
           <div className="flex flex-wrap gap-2">
             {recentStops.map((name) => (
               <button
@@ -140,7 +153,7 @@ export default function Home() {
                   setInput(name);
                   queryDepartures(name);
                 }}
-                className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-sm rounded-full shadow-sm transition"
+                className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-sm rounded-full shadow-sm transition"
               >
                 {name}
               </button>
@@ -150,14 +163,18 @@ export default function Home() {
       )}
 
       <div className="space-y-3">
-        {logs.split('\n').map((line, idx) => (
-          <div
-            key={idx}
-            className="p-3 rounded-lg bg-gray-100 border-l-4 border-blue-500 text-sm shadow-sm font-mono"
-          >
-            {line}
-          </div>
-        ))}
+        {logs === '请搜索站点' || logs === '查询中…' ? (
+          <p className="text-gray-500">{logs}</p>
+        ) : (
+          logs.split('\n').map((line, idx) => (
+            <div
+              key={idx}
+              className="p-4 bg-white border rounded-lg shadow flex items-center justify-between text-sm"
+            >
+              <span className="text-gray-800 font-mono">{line}</span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
