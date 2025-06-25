@@ -252,7 +252,7 @@ export default function Home() {
         <p className="text-blue-500 animate-pulse mb-4">查询中...</p>
       )}
 
-      <DepartureLog lines={lines} />
+      <DepartureLog logs={lines} />
     </div>
   );
 }

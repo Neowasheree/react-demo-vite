@@ -1,72 +1,56 @@
-import { motion } from 'framer-motion';
+import React from "react";
 
-export default function DepartureLog({ lines }) {
-  console.log('📦 grouped lines:', lines);
-  if (!Array.isArray(lines) || lines.length === 0) return null;
+export default function DepartureLog({ logs }) {
+  if (!Array.isArray(logs)) {
+    return (
+      <div className="p-4 bg-gray-100 rounded-md text-gray-700 whitespace-pre-wrap">
+        {logs}
+      </div>
+    );
+  }
 
-  const grouped = lines.reduce((acc, item) => {
-    const key = item.line;
+  // 按线路名分组
+  const groupedLines = logs.reduce((acc, item) => {
+    const key = item.line || "未知线路";
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
     return acc;
   }, {});
 
-  const getColorClass = (line) => {
-    if (line.includes('20')) return 'bg-cyan-500';
-    if (line.includes('21')) return 'bg-amber-600';
-    if (line.includes('N20')) return 'bg-teal-600';
-    return 'bg-gray-400';
-  };
-
-  const renderStatus = (status) => {
-    if (status.includes('Cancelled')) return '❌ 已取消';
-    if (status.includes('Delayed')) return `🚨 延误 ${status.split('+')[1]}`;
-    return '✅ 准点';
-  };
-
   return (
-    <div className="space-y-4">
-      {Object.entries(grouped).map(([line, items]) => (
-        <motion.div
+    <div className="space-y-6 mt-6">
+      {Object.entries(groupedLines).map(([line, items]) => (
+        <div
           key={line}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white rounded-xl shadow-md p-4"
+          className="bg-white rounded-xl shadow-lg p-5 border border-gray-200"
         >
-          {/* 线路头部 */}
-          <div className="flex items-center mb-3">
-            <div className="ml-2 font-semibold text-gray-800 text-base">
-              路线 {line}
-            </div>
-          </div>
-
-          {/* 班次内容 */}
-          <div className="divide-y divide-gray-100">
+          <h2 className="text-lg font-bold text-blue-700 mb-4">
+            🚋 {line} 路线
+          </h2>
+          <div className="space-y-3">
             {items.map((item, idx) => (
-              <div key={idx} className="flex justify-between items-start py-3">
+              <div
+                key={idx}
+                className="flex justify-between border-b last:border-none pb-2"
+              >
                 {/* 左侧内容 */}
                 <div>
-                  <div className="text-base font-medium text-gray-900">
+                  <div className="text-sm font-semibold text-gray-800">
                     {item.destination}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5 leading-snug">
-                    ⏱ 预计 {item.time}
-                    <br />
-                    {renderStatus(item.status)}
+                  <div className="text-xs text-gray-500">
+                    ⏱ 预计 {item.time} · {item.status}
                   </div>
                 </div>
 
-                {/* 右侧时间 */}
-                <div className="text-right">
-                  <div className="text-lg font-semibold text-gray-900">
-                    {item.mins} 分钟
-                  </div>
+                {/* 右侧分钟数 */}
+                <div className="text-right text-sm text-gray-800 font-medium min-w-[3rem]">
+                  {item.mins} 分钟
                 </div>
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
