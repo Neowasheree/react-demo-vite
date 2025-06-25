@@ -1,7 +1,8 @@
-// Animated + Mobile-Optimized Home.jsx with Clear and Favorite Delete Features
+// Full-featured Home.jsx with grouped DepartureLog and all previous features retained
 import { useState, useEffect } from 'react';
 import allowedStops from '../allowedStops';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import DepartureLog from './DepartureLog';
 
 const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
@@ -39,15 +40,15 @@ export default function Home() {
     localStorage.setItem('favorites', JSON.stringify(updated));
   };
 
-  const clearRecentStops = () => {
-    setRecentStops([]);
-    localStorage.removeItem('recentStops');
-  };
-
   const removeFavorite = (name) => {
     const updated = favorites.filter((s) => s !== name);
     setFavorites(updated);
     localStorage.setItem('favorites', JSON.stringify(updated));
+  };
+
+  const clearRecentStops = () => {
+    setRecentStops([]);
+    localStorage.removeItem('recentStops');
   };
 
   const queryDepartures = async (customTerm) => {
@@ -85,7 +86,7 @@ export default function Home() {
     const stopId = allowedStops[stopName];
     const url = `${BASE_URL}/departures?globalId=${encodeURIComponent(
       stopId
-    )}&limit=5&transportTypes=TRAM,BUS`;
+    )}&limit=10&transportTypes=TRAM,BUS`;
 
     let data;
     try {
@@ -130,6 +131,7 @@ export default function Home() {
     setLines(formattedLines);
     setLogs('');
     saveStop(stopName);
+    setInput('');
 
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(`${stopName} Departures`, {
@@ -138,8 +140,6 @@ export default function Home() {
           .join('\n'),
       });
     }
-
-    setInput('');
   };
 
   return (
@@ -173,9 +173,7 @@ export default function Home() {
         <div className="mb-6">
           {favorites.length > 0 && (
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-sm font-semibold text-gray-600">⭐ 常用站点</h2>
-              </div>
+              <h2 className="text-sm font-semibold text-gray-600 mb-2">⭐ 常用站点</h2>
               <div className="flex flex-wrap gap-2">
                 {favorites.map((name) => (
                   <motion.div
@@ -247,35 +245,11 @@ export default function Home() {
         </div>
       )}
 
-      <div className="space-y-3">
-        {logs === '查询中…' && (
-          <p className="text-blue-500 animate-pulse">查询中...</p>
-        )}
-        <AnimatePresence>
-          {lines.map((item, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="p-4 bg-white border rounded-lg shadow-sm text-sm space-y-1"
-            >
-              <div className="flex justify-between font-semibold text-blue-700">
-                <span>{item.line} → {item.destination}</span>
-                <span>{item.time}（{item.mins}min）</span>
-              </div>
-              <div className={
-                item.status.includes('Delayed') ? 'text-red-600'
-                : item.status.includes('On time') ? 'text-green-600'
-                : 'text-gray-500'
-              }>
-                {item.status}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {logs === '查询中…' && (
+        <p className="text-blue-500 animate-pulse mb-4">查询中...</p>
+      )}
+
+      <DepartureLog lines={lines} />
     </div>
   );
 }
