@@ -1,5 +1,7 @@
+// Animated + Mobile-Optimized Home.jsx
 import { useState, useEffect } from 'react';
 import allowedStops from '../allowedStops';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
@@ -117,10 +119,14 @@ export default function Home() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
-      <div className="text-center mb-6">
+      <motion.div
+        className="text-center mb-6"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-3xl font-bold text-blue-700">🚋 Tram Departures</h1>
         <p className="text-sm text-gray-500 mt-1">实时查看慕尼黑轻轨 & 公交车次</p>
-      </div>
+      </motion.div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <input
@@ -132,7 +138,7 @@ export default function Home() {
         />
         <button
           onClick={() => queryDepartures()}
-          className="w-full sm:w-auto px-4 py-3 text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow"
+          className="w-full sm:w-auto px-4 py-3 text-base bg-blue-600 text-white rounded-lg hover:scale-105 transition-transform font-semibold shadow"
         >
           🔍 查询
         </button>
@@ -143,8 +149,9 @@ export default function Home() {
           <h2 className="text-sm font-semibold text-gray-600 mb-2">🕘 最近使用</h2>
           <div className="flex flex-wrap gap-2">
             {recentStops.map((name) => (
-              <button
+              <motion.button
                 key={name}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   setInput(name);
                   queryDepartures(name);
@@ -152,34 +159,40 @@ export default function Home() {
                 className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-full text-sm shadow-sm"
               >
                 {name}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
       )}
 
       <div className="space-y-3">
-        {logs && <p className="text-gray-500">{logs}</p>}
-        {lines.map((item, idx) => (
-          <div
-            key={idx}
-            className="p-4 bg-white border rounded-lg shadow-sm text-sm space-y-1"
-          >
-            <div className="flex justify-between font-semibold text-blue-700">
-              <span>{item.line} → {item.destination}</span>
-              <span>{item.time}（{item.mins}min）</span>
-            </div>
-            <div className={
-              item.status.includes('Delayed')
-                ? 'text-red-600'
-                : item.status.includes('On time')
-                ? 'text-green-600'
+        {logs === '查询中…' && (
+          <p className="text-blue-500 animate-pulse">查询中...</p>
+        )}
+        <AnimatePresence>
+          {lines.map((item, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="p-4 bg-white border rounded-lg shadow-sm text-sm space-y-1"
+            >
+              <div className="flex justify-between font-semibold text-blue-700">
+                <span>{item.line} → {item.destination}</span>
+                <span>{item.time}（{item.mins}min）</span>
+              </div>
+              <div className={
+                item.status.includes('Delayed') ? 'text-red-600'
+                : item.status.includes('On time') ? 'text-green-600'
                 : 'text-gray-500'
-            }>
-              {item.status}
-            </div>
-          </div>
-        ))}
+              }>
+                {item.status}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
