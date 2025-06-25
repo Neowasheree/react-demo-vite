@@ -105,46 +105,57 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 bg-white rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold text-center mb-4">🚋 Tram Departures</h1>
+  <div className="max-w-xl mx-auto px-4 py-10 bg-white rounded-lg shadow-xl">
+    <h1 className="text-4xl font-bold text-center text-blue-700 mb-6 tracking-wide">
+      🚋 Tram Departures
+    </h1>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="输入站点名，如 Borstei"
-          className="w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300"
-        />
-        <button
-          onClick={queryDepartures}
-          className="mt-2 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          查询并通知
-        </button>
-      </div>
-
-      {recentStops.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold mb-2">🕘 最近使用</h2>
-          <div className="flex flex-wrap gap-2">
-            {recentStops.map((name) => (
-              <button
-                key={name}
-                onClick={() => {
-                  setInput(name);
-                  queryDepartures();
-                }}
-                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap">{logs}</pre>
+    <div className="mb-6">
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="请输入站点名（如 Borstei）"
+        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
+      />
+      <button
+        onClick={queryDepartures}
+        className="w-full mt-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition"
+      >
+        🔍 查询并通知
+      </button>
     </div>
-  );
+
+    {recentStops.length > 0 && (
+      <div className="mb-6">
+        <h2 className="text-md font-semibold text-gray-700 mb-2">🕘 最近使用</h2>
+        <div className="flex flex-wrap gap-2">
+          {recentStops.map((name) => (
+            <button
+              key={name}
+              onClick={() => {
+                setInput(name);
+                queryDepartures();
+              }}
+              className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-sm rounded-full shadow-sm transition"
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div className="space-y-3">
+      {logs.split('\n').map((line, idx) => (
+        <div
+          key={idx}
+          className="p-3 rounded-lg bg-gray-100 border-l-4 border-blue-500 text-sm shadow-sm font-mono"
+        >
+          {line}
+        </div>
+      ))}
+    </div>
+  </div>
+);
 }
