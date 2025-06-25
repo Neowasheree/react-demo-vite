@@ -5,6 +5,7 @@ const BASE_URL = 'https://www.mvg.de/api/bgw-pt/v3';
 
 export default function Home() {
   const [input, setInput] = useState('');
+  const [lines, setLines] = useState([]); // ✅ 查询结果改为对象数组
   const [logs, setLogs] = useState('请搜索站点');
   const [recentStops, setRecentStops] = useState([]);
 
@@ -30,7 +31,8 @@ export default function Home() {
       return;
     }
 
-    setLogs('查询中…'); // ✅ 确保仅在 term 有效后设置
+    setLogs('查询中…');
+    setLines([]);
 
     const candidates = Object.keys(allowedStops).filter((name) =>
       name.toLowerCase().includes(term.toLowerCase())
@@ -76,7 +78,7 @@ export default function Home() {
       return;
     }
 
-    const lines = data.map((d) => {
+    const formattedLines = data.map((d) => {
       const departMs = d.realtimeDepartureTime;
       const mins = Math.round((departMs - now) / 60000);
       const timeStr = new Date(departMs).toLocaleTimeString('en-GB', {
@@ -98,19 +100,16 @@ export default function Home() {
       };
     });
 
-    const formatted = lines
-      .map(
-        (item) =>
-          `${item.line} → ${item.destination}: ${item.time} (in ${item.mins}min) ${item.status}`
-      )
-      .join('\n');
+    setLines(formattedLines);
+    setLogs('');
 
-    setLogs(formatted);
     saveStop(stopName);
 
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(`${stopName} Departures`, {
-        body: formatted,
+        body: formattedLines
+          .map((l) => `${l.line} → ${l.destination}: ${l.time} (${l.status})`)
+          .join('\n'),
       });
     }
 
@@ -120,8 +119,10 @@ export default function Home() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="text-center mb-8">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-700 tracking-wide mb-1"> 🚋 Tram Departures</h1>
-        <p className="text-gray-600 text-sm sm:text-base mb-4">查看慕尼黑轻轨 & 公交的实时到站信息</p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-blue-700 tracking-wide mb-1">🚋 Tram Departures</h1>
+        <p className="text-gray-600 text-sm sm:text-base mb-4">
+          查看慕尼黑轻轨 & 公交的实时到站信息
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
@@ -130,11 +131,11 @@ export default function Home() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="输入站点名（如 Borstei）"
-          className="w-full flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
+          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-base"
         />
         <button
           onClick={() => queryDepartures()}
-          className="w-full sm:w-auto flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+          className="w-full sm:w-auto flex items-center gap-2 justify-center px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
         >
           🔍 查询并通知
         </button>
@@ -163,18 +164,29 @@ export default function Home() {
       )}
 
       <div className="space-y-3">
-        {logs === '请搜索站点' || logs === '查询中…' ? (
-          <p className="text-gray-500">{logs}</p>
-        ) : (
-          logs.split('\n').map((line, idx) => (
-            <div
-              key={idx}
-              className="p-3 rounded-lg bg-white border shadow text-sm space-y-1 font-mono"
-            >
-              {line}
+        {logs && <p className="text-gray-500">{logs}</p>}
+        {lines.map((item, idx) => (
+          <div
+            key={idx}
+            className="bg-white border rounded-lg shadow-sm p-3 text-sm space-y-1"
+          >
+            <div className="flex justify-between items-center font-semibold text-blue-700">
+              <div>{item.line} → {item.destination}</div>
+              <div>{item.time}（{item.mins}min）</div>
             </div>
-          ))
-        )}
+           <div className={
+              item.status.includes('Delayed')
+                ? 'text-red-600'
+                : item.status.includes('On time')
+                ? 'text-green-600'
+                : item.status.includes('Cancelled')
+                ? 'text-gray-500'
+                : 'text-gray-700'
+            }>
+              {item.status}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
